@@ -12,6 +12,11 @@
             margin: 0 auto;
             padding: 20px;
         }
+        #ton-connect-container {
+            display: flex;
+            justify-content: flex-end; /* Выравниваем по правому краю */
+            margin-bottom: 20px;
+        }
         #send-btn {
             margin-top: 20px;
             padding: 10px 15px;
@@ -20,6 +25,7 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            width: 100%;
         }
         #send-btn:disabled {
             background: #cccccc;
@@ -62,7 +68,9 @@
 <body>
     <h1>TON Payment</h1>
     
-    <div id="ton-connect"></div>
+    <div id="ton-connect-container">
+        <div id="ton-connect"></div>
+    </div>
     
     <div class="input-group">
         <label for="amount">Amount (TON):</label>
