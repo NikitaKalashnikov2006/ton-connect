@@ -4,13 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TON Payment</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?57"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            /*font-family: Arial, sans-serif;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 20px;*/
+            background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+    /*padding-top: var(--ts-safe-area-inset-top);
+    padding-bottom: var(--ts-safe-area-inset-bottom);*/
+    padding-top: var(--tg-content-safe-area-inset-top);
+    padding-bottom: var(--tg-content-safe-area-inset-bottom);
         }
         #ton-connect-container {
             display: flex;
@@ -81,6 +88,17 @@
     <button id="send-btn" disabled>Send Transaction</button>
     
     <script>
+         const tg = window.Telegram.WebApp;
+         tg.ready();
+
+
+  
+ const availableScreenWidth = window.screen.availWidth;
+ const availableScreenHeight = window.screen.availHeight;
+ if (availableScreenWidth < 1440 && availableScreenHeight < 3220){
+tg.requestFullscreen();
+ }
+        
         // Инициализация TonConnectUI
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://nikitakalashnikov2006.github.io/shop/manifest-tonconnect.json',
