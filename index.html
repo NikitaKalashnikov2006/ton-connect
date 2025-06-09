@@ -14,7 +14,7 @@
         }
         #ton-connect-container {
             display: flex;
-            justify-content: flex-end; /* Выравниваем по правому краю */
+            justify-content: flex-end;
             margin-bottom: 20px;
         }
         #send-btn {
@@ -84,7 +84,10 @@
         // Инициализация TonConnectUI
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://nikitakalashnikov2006.github.io/shop/manifest-tonconnect.json',
-            buttonRootId: 'ton-connect'
+            buttonRootId: 'ton-connect',
+            uiOptions: {
+                twaReturnUrl: 'https://t.me/YOUR_APP_NAME' // Замените на ваш Telegram-бот или приложение
+            }
         });
 
         // Элементы DOM
@@ -96,7 +99,6 @@
         function isValidNumber(value) {
             if (value === '' || value === '.') return false;
             
-            // Проверяем, что это число и оно больше 0
             const num = parseFloat(value);
             return !isNaN(num) && isFinite(num) && num > 0;
         }
@@ -113,21 +115,17 @@
         amountInput.addEventListener('input', function(e) {
             let value = e.target.value;
             
-            // Форматируем ввод
             value = value
-                .replace(/[^0-9.,]/g, '') // Удаляем все кроме цифр и .,
-                .replace(/,/g, '.'); // Заменяем запятые на точки
+                .replace(/[^0-9.,]/g, '')
+                .replace(/,/g, '.');
             
-            // Удаляем лишние точки (оставляем только первую)
             const parts = value.split('.');
             if (parts.length > 2) {
                 value = parts[0] + '.' + parts.slice(1).join('');
             }
             
-            // Обновляем значение в поле ввода
             e.target.value = value;
             
-            // Валидация
             if (isValidNumber(value)) {
                 amountInput.classList.remove('error');
                 amountError.style.display = 'none';
@@ -142,25 +140,28 @@
         // Подписываемся на изменения состояния подключения
         tonConnectUI.onStatusChange((wallet) => {
             updateButtonState();
+            
+            // Если кошелек подключен и мы в Telegram WebView, можно сразу вернуться
+            if (wallet && window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.close();
+            }
         });
 
         // Обработчик клика по кнопке отправки
         sendBtn.addEventListener('click', async () => {
             const amount = parseFloat(amountInput.value);
             
-            // Дополнительная проверка перед отправкой
             if (!isValidNumber(amountInput.value)) {
                 amountInput.classList.add('error');
                 amountError.style.display = 'block';
                 return;
             }
 
-            // Конвертируем TON в наноТоны (1 TON = 10^9 наноТонов)
             const nanotons = Math.round(amount * 1000000000).toString();
 
             try {
                 const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 300, // 5 минут
+                    validUntil: Math.floor(Date.now() / 1000) + 300,
                     messages: [
                         {
                             address: "0QD0LFy2lUH2LXI6y9-Xl9Ao6ZkEdgwpd-91V828VVFGrCzG",
@@ -169,7 +170,13 @@
                     ]
                 };
 
-                await tonConnectUI.sendTransaction(transaction);
+                const result = await tonConnectUI.sendTransaction(transaction);
+                
+                // После успешной транзакции, если мы в Telegram WebView, закрываем окно
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.close();
+                }
+                
             } catch (error) {
                 console.error('Transaction error:', error);
             }
