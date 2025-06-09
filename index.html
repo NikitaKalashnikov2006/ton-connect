@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TON Payment</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
+        /* Ваши стили остаются без изменений */
         body {
             font-family: Arial, sans-serif;
             max-width: 600px;
@@ -55,14 +57,6 @@
             margin-top: 5px;
             display: none;
         }
-        /* Правильные селекторы для отключения уведомлений */
-        [data-tc-actions-modal-container="true"],
-        [data-tc-list-notifications="true"],
-        [data-tc-notification-confirm="true"],
-        [data-tc-notification-tx-sent="true"],
-        [data-tc-notification-tx-cancelled="true"] {
-            display: none !important;
-        }
     </style>
 </head>
 <body>
@@ -75,55 +69,49 @@
     <div class="input-group">
         <label for="amount">Amount (TON):</label>
         <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON" inputMode="decimal">
-        <div id="amount-error">Пожалуйста, введите корректное число</div>
+        <div id="amount-error">Please enter a valid number</div>
     </div>
     
     <button id="send-btn" disabled>Send Transaction</button>
     
     <script>
-        // Инициализация TonConnectUI
+        // Проверяем, открыто ли в Telegram WebView
+        const isTelegramWebView = window.Telegram && window.Telegram.WebApp;
+        
+        // Инициализация TonConnectUI с правильными параметрами
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://nikitakalashnikov2006.github.io/shop/manifest-tonconnect.json',
             buttonRootId: 'ton-connect',
             uiOptions: {
-                twaReturnUrl: 'https://t.me/Business_shop_bot/App' // Замените на ваш Telegram-бот или приложение
+                twaReturnUrl: isTelegramWebView 
+                    ? window.Telegram.WebApp.platform === 'ios' 
+                        ? 'https://t.me/your_bot_name' // для iOS
+                        : 'tg://resolve?domain=your_bot_name' // для Android
+                    : undefined
             }
         });
 
-        // Элементы DOM
+        // Остальной код остается без изменений
         const sendBtn = document.getElementById('send-btn');
         const amountInput = document.getElementById('amount');
         const amountError = document.getElementById('amount-error');
 
-        // Функция проверки валидности числа
         function isValidNumber(value) {
             if (value === '' || value === '.') return false;
-            
             const num = parseFloat(value);
             return !isNaN(num) && isFinite(num) && num > 0;
         }
 
-        // Функция обновления состояния кнопки
         function updateButtonState() {
             const isConnected = !!tonConnectUI.wallet;
             const isValid = isValidNumber(amountInput.value);
-            
             sendBtn.disabled = !isConnected || !isValid;
         }
 
-        // Обработчик ввода для форматирования и валидации
         amountInput.addEventListener('input', function(e) {
-            let value = e.target.value;
-            
-            value = value
-                .replace(/[^0-9.,]/g, '')
-                .replace(/,/g, '.');
-            
+            let value = e.target.value.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
             const parts = value.split('.');
-            if (parts.length > 2) {
-                value = parts[0] + '.' + parts.slice(1).join('');
-            }
-            
+            if (parts.length > 2) value = parts[0] + '.' + parts.slice(1).join('');
             e.target.value = value;
             
             if (isValidNumber(value)) {
@@ -133,56 +121,46 @@
                 amountInput.classList.add('error');
                 amountError.style.display = 'block';
             }
-            
             updateButtonState();
         });
 
-        // Подписываемся на изменения состояния подключения
         tonConnectUI.onStatusChange((wallet) => {
             updateButtonState();
-            
-            // Если кошелек подключен и мы в Telegram WebView, можно сразу вернуться
-            if (wallet && window.Telegram && window.Telegram.WebApp) {
+            if (wallet && isTelegramWebView) {
                 window.Telegram.WebApp.close();
             }
         });
 
-        // Обработчик клика по кнопке отправки
         sendBtn.addEventListener('click', async () => {
             const amount = parseFloat(amountInput.value);
-            
             if (!isValidNumber(amountInput.value)) {
                 amountInput.classList.add('error');
                 amountError.style.display = 'block';
                 return;
             }
 
-            const nanotons = Math.round(amount * 1000000000).toString();
-
             try {
                 const transaction = {
                     validUntil: Math.floor(Date.now() / 1000) + 300,
-                    messages: [
-                        {
-                            address: "0QD0LFy2lUH2LXI6y9-Xl9Ao6ZkEdgwpd-91V828VVFGrCzG",
-                            amount: nanotons
-                        }
-                    ]
+                    messages: [{
+                        address: "0QD0LFy2lUH2LXI6y9-Xl9Ao6ZkEdgwpd-91V828VVFGrCzG",
+                        amount: Math.round(amount * 1000000000).toString()
+                    }]
                 };
 
-                const result = await tonConnectUI.sendTransaction(transaction);
+                await tonConnectUI.sendTransaction(transaction);
                 
-                // После успешной транзакции, если мы в Telegram WebView, закрываем окно
-                if (window.Telegram && window.Telegram.WebApp) {
+                if (isTelegramWebView) {
                     window.Telegram.WebApp.close();
                 }
-                
             } catch (error) {
                 console.error('Transaction error:', error);
+                if (isTelegramWebView) {
+                    window.Telegram.WebApp.showAlert('Transaction failed: ' + error.message);
+                }
             }
         });
 
-        // Инициализация состояния при загрузке
         updateButtonState();
         amountInput.dispatchEvent(new Event('input'));
     </script>
