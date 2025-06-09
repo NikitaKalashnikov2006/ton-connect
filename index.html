@@ -40,8 +40,16 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        input.error {
+            border-color: red;
+        }
+        #amount-error {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
         /* Правильные селекторы для отключения уведомлений */
-        /*[data-tc-dropdown-container="true"],*/
         [data-tc-actions-modal-container="true"],
         [data-tc-list-notifications="true"],
         [data-tc-notification-confirm="true"],
@@ -58,8 +66,8 @@
     
     <div class="input-group">
         <label for="amount">Amount (TON):</label>
-        <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON"  inputMode="decimal">
-        <div id="amount-error" style="color: red; display: none;">Пожалуйста, введите корректное число</div>
+        <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON" inputMode="decimal">
+        <div id="amount-error">Пожалуйста, введите корректное число</div>
     </div>
     
     <button id="send-btn" disabled>Send Transaction</button>
@@ -74,37 +82,69 @@
         // Элементы DOM
         const sendBtn = document.getElementById('send-btn');
         const amountInput = document.getElementById('amount');
+        const amountError = document.getElementById('amount-error');
 
-        // Обработчик ввода для форматирования значения
+        // Функция проверки валидности числа
+        function isValidNumber(value) {
+            if (value === '' || value === '.') return false;
+            
+            // Проверяем, что это число и оно больше 0
+            const num = parseFloat(value);
+            return !isNaN(num) && isFinite(num) && num > 0;
+        }
+
+        // Функция обновления состояния кнопки
+        function updateButtonState() {
+            const isConnected = !!tonConnectUI.wallet;
+            const isValid = isValidNumber(amountInput.value);
+            
+            sendBtn.disabled = !isConnected || !isValid;
+        }
+
+        // Обработчик ввода для форматирования и валидации
         amountInput.addEventListener('input', function(e) {
             let value = e.target.value;
             
             // Форматируем ввод
             value = value
                 .replace(/[^0-9.,]/g, '') // Удаляем все кроме цифр и .,
-                //.replace(/(\..*?\.|,,)/g, '$1') // Запрещаем множественные точки/запятые
                 .replace(/,/g, '.'); // Заменяем запятые на точки
+            
+            // Удаляем лишние точки (оставляем только первую)
+            const parts = value.split('.');
+            if (parts.length > 2) {
+                value = parts[0] + '.' + parts.slice(1).join('');
+            }
             
             // Обновляем значение в поле ввода
             e.target.value = value;
-            const errorElement = document.getElementById('amount-error');
-    if (value && !isValidNumber(value)) {
-        errorElement.style.display = 'block';
-    } else {
-        errorElement.style.display = 'none';
-    }
+            
+            // Валидация
+            if (isValidNumber(value)) {
+                amountInput.classList.remove('error');
+                amountError.style.display = 'none';
+            } else {
+                amountInput.classList.add('error');
+                amountError.style.display = 'block';
+            }
+            
+            updateButtonState();
         });
 
         // Подписываемся на изменения состояния подключения
         tonConnectUI.onStatusChange((wallet) => {
-            sendBtn.disabled = !wallet;
+            updateButtonState();
         });
 
         // Обработчик клика по кнопке отправки
         sendBtn.addEventListener('click', async () => {
-            let amount = parseFloat(amountInput.value);
-            if (isNaN(amount)) {
-                amount = 0;
+            const amount = parseFloat(amountInput.value);
+            
+            // Дополнительная проверка перед отправкой
+            if (!isValidNumber(amountInput.value)) {
+                amountInput.classList.add('error');
+                amountError.style.display = 'block';
+                return;
             }
 
             // Конвертируем TON в наноТоны (1 TON = 10^9 наноТонов)
@@ -126,6 +166,10 @@
                 console.error('Transaction error:', error);
             }
         });
+
+        // Инициализация состояния при загрузке
+        updateButtonState();
+        amountInput.dispatchEvent(new Event('input'));
     </script>
 </body>
 </html>
