@@ -59,6 +59,7 @@
     <div class="input-group">
         <label for="amount">Amount (TON):</label>
         <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON"  inputMode="decimal">
+        <div id="amount-error" style="color: red; display: none;">Пожалуйста, введите корректное число</div>
     </div>
     
     <button id="send-btn" disabled>Send Transaction</button>
@@ -86,9 +87,12 @@
             
             // Обновляем значение в поле ввода
             e.target.value = value;
-           /*if (value == NaN){
-               document.getElementById('amount').innerHTML = "Введите корректное число!";
-           }*/
+            const errorElement = document.getElementById('amount-error');
+    if (value && !isValidNumber(value)) {
+        errorElement.style.display = 'block';
+    } else {
+        errorElement.style.display = 'none';
+    }
         });
 
         // Подписываемся на изменения состояния подключения
