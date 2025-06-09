@@ -40,6 +40,15 @@
             border: 1px solid #ddd;
             border-radius: 4px;
         }
+        /* Правильные селекторы для отключения уведомлений */
+        /*[data-tc-dropdown-container="true"],*/
+        [data-tc-actions-modal-container="true"],
+        [data-tc-list-notifications="true"],
+        [data-tc-notification-confirm="true"],
+        [data-tc-notification-tx-sent="true"],
+        [data-tc-notification-tx-cancelled="true"] {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -49,7 +58,7 @@
     
     <div class="input-group">
         <label for="amount">Amount (TON):</label>
-        <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON">
+        <input type="text" id="amount" value="0.02" placeholder="Enter amount in TON"  inputMode="decimal">
     </div>
     
     <button id="send-btn" disabled>Send Transaction</button>
