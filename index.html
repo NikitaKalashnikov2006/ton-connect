@@ -84,7 +84,10 @@
         // Инициализация TonConnectUI
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://nikitakalashnikov2006.github.io/shop/manifest-tonconnect.json',
-            buttonRootId: 'ton-connect'
+            buttonRootId: 'ton-connect',
+            uiOptions: {
+            twaReturnUrl: 'https://t.me/Business_shop_bot/App'
+            }
         });
 
         // Элементы DOM
