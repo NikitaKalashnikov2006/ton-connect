@@ -78,17 +78,17 @@
         amountInput.addEventListener('input', function(e) {
             let value = e.target.value;
             
-            /*// Форматируем ввод
+            // Форматируем ввод
             value = value
                 .replace(/[^0-9.,]/g, '') // Удаляем все кроме цифр и .,
-                //.replace(/(\..*?\.|,,)/g, '$1') // Запрещаем множественные точки/запятые*/
+                //.replace(/(\..*?\.|,,)/g, '$1') // Запрещаем множественные точки/запятые
                 .replace(/,/g, '.'); // Заменяем запятые на точки
             
             // Обновляем значение в поле ввода
             e.target.value = value;
-           if (value == NaN){
+           /*if (value == NaN){
                document.getElementById('amount').innerHTML = "Введите корректное число!";
-           }
+           }*/
         });
 
         // Подписываемся на изменения состояния подключения
